@@ -21,7 +21,9 @@
     "tailwindcss": "^3.4.1",
     "postcss": "^8",
     "autoprefixer": "^10.4.0",
-    "pino-pretty": "^10.3.1"
+    "pino-pretty": "^10.3.1",
+    "clsx": "^2.1.0",
+    "web-vitals": "^4.2.4"
   },
   "devDependencies": {
     "@types/node": "^20",
