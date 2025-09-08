@@ -1,13 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { useAccount } from 'wagmi';
 import { Card } from './Card';
 import { Button } from './Button';
 import { TextInput, Textarea } from './TextInput';
 import { LoadingSpinner } from './LoadingSpinner';
+import { PaymentModal } from './PaymentModal';
 import { generateDateIdeas } from '@/lib/ai';
 import { validateDateIdeaInput } from '@/lib/utils';
-import { MapPin, Clock, DollarSign, Heart, RefreshCw } from 'lucide-react';
+import { paymentService } from '@/lib/payment';
+import { MapPin, Clock, DollarSign, Heart, RefreshCw, CreditCard } from 'lucide-react';
 
 interface DateIdeaItem {
   title: string;
@@ -18,6 +21,7 @@ interface DateIdeaItem {
 }
 
 export function DateIdeaGenerator() {
+  const { address, isConnected } = useAccount();
   const [formData, setFormData] = useState({
     interests: '',
     location: '',
@@ -28,9 +32,17 @@ export function DateIdeaGenerator() {
   const [generatedIdeas, setGeneratedIdeas] = useState<DateIdeaItem[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pendingGeneration, setPendingGeneration] = useState(false);
 
   const handleGenerate = async () => {
     setError(null);
+    
+    // Check wallet connection
+    if (!isConnected || !address) {
+      setError('Please connect your wallet to generate date ideas');
+      return;
+    }
     
     const interests = formData.interests.split(',').map(i => i.trim()).filter(i => i);
     
@@ -45,15 +57,42 @@ export function DateIdeaGenerator() {
       return;
     }
 
+    // Show payment modal for new generations
+    setPendingGeneration(true);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async () => {
+    if (!pendingGeneration) return;
+    
     setIsGenerating(true);
+    setPendingGeneration(false);
     
     try {
-      const ideas = await generateDateIdeas({
-        interests,
-        location: formData.location,
-        vibe: formData.vibe,
-        budget: formData.budget || undefined,
+      const interests = formData.interests.split(',').map(i => i.trim()).filter(i => i);
+      
+      // Use API route instead of direct AI call for production
+      const response = await fetch('/api/generate-date-ideas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          interests,
+          location: formData.location,
+          vibe: formData.vibe,
+          budget: formData.budget || undefined,
+          walletAddress: address,
+        }),
       });
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to generate date ideas');
+      }
+      
+      const ideas = result.data;
       
       setGeneratedIdeas(ideas);
     } catch (err) {
@@ -111,9 +150,18 @@ export function DateIdeaGenerator() {
             onClick={handleGenerate}
             isLoading={isGenerating}
             className="w-full"
-            disabled={isGenerating}
+            disabled={isGenerating || !isConnected}
           >
-            {isGenerating ? 'Creating Perfect Date Ideas...' : 'Generate Date Ideas'}
+            {isGenerating ? (
+              'Creating Perfect Date Ideas...'
+            ) : !isConnected ? (
+              'Connect Wallet to Generate'
+            ) : (
+              <>
+                <CreditCard className="w-4 h-4 mr-2" />
+                Generate Date Ideas ({paymentService.formatCost('dateIdeas')})
+              </>
+            )}
           </Button>
         </div>
       </Card>
@@ -162,6 +210,16 @@ export function DateIdeaGenerator() {
           </Button>
         </div>
       )}
+
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setPendingGeneration(false);
+        }}
+        serviceType="dateIdeas"
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }
