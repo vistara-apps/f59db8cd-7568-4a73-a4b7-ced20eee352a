@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useAccount } from 'wagmi';
 import { Card } from './Card';
 import { Button } from './Button';
 import { TextInput, Textarea } from './TextInput';
 import { LoadingSpinner } from './LoadingSpinner';
-import { generateDateIdeas } from '@/lib/ai';
+import { PaymentModal } from './PaymentModal';
 import { validateDateIdeaInput } from '@/lib/utils';
-import { MapPin, Clock, DollarSign, Heart, RefreshCw } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Heart, RefreshCw, CreditCard } from 'lucide-react';
 
 interface DateIdeaItem {
   title: string;
@@ -28,9 +29,18 @@ export function DateIdeaGenerator() {
   const [generatedIdeas, setGeneratedIdeas] = useState<DateIdeaItem[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  
+  const { address, isConnected } = useAccount();
 
   const handleGenerate = async () => {
     setError(null);
+    
+    // Check if wallet is connected
+    if (!isConnected || !address) {
+      setError('Please connect your wallet to generate date ideas');
+      return;
+    }
     
     const interests = formData.interests.split(',').map(i => i.trim()).filter(i => i);
     
@@ -45,17 +55,38 @@ export function DateIdeaGenerator() {
       return;
     }
 
+    // Show payment modal for paid generation
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async () => {
     setIsGenerating(true);
+    setError(null);
     
     try {
-      const ideas = await generateDateIdeas({
-        interests,
-        location: formData.location,
-        vibe: formData.vibe,
-        budget: formData.budget || undefined,
-      });
+      const interests = formData.interests.split(',').map(i => i.trim()).filter(i => i);
       
-      setGeneratedIdeas(ideas);
+      const response = await fetch('/api/date-ideas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          interests,
+          location: formData.location,
+          vibe: formData.vibe,
+          budget: formData.budget,
+          walletAddress: address,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setGeneratedIdeas(result.data);
+      } else {
+        setError(result.error || 'Failed to generate date ideas');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate date ideas');
     } finally {
@@ -111,10 +142,17 @@ export function DateIdeaGenerator() {
             onClick={handleGenerate}
             isLoading={isGenerating}
             className="w-full"
-            disabled={isGenerating}
+            disabled={isGenerating || !isConnected}
           >
-            {isGenerating ? 'Creating Perfect Date Ideas...' : 'Generate Date Ideas'}
+            <CreditCard className="w-4 h-4 mr-2" />
+            {isGenerating ? 'Creating Perfect Date Ideas...' : 'Generate Date Ideas (0.001 ETH)'}
           </Button>
+          
+          {!isConnected && (
+            <p className="text-sm text-gray-500 text-center">
+              Connect your wallet to generate date ideas
+            </p>
+          )}
         </div>
       </Card>
 
@@ -156,12 +194,21 @@ export function DateIdeaGenerator() {
             onClick={handleGenerate}
             isLoading={isGenerating}
             className="w-full flex items-center space-x-2"
+            disabled={!isConnected}
           >
             <RefreshCw className="w-4 h-4" />
-            <span>Generate New Ideas</span>
+            <span>Generate New Ideas (0.001 ETH)</span>
           </Button>
         </div>
       )}
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        serviceType="date-ideas"
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }

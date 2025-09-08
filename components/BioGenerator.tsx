@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useAccount } from 'wagmi';
 import { Card } from './Card';
 import { Button } from './Button';
 import { TextInput, Textarea } from './TextInput';
 import { LoadingSpinner } from './LoadingSpinner';
-import { generateDatingBio } from '@/lib/ai';
+import { PaymentModal } from './PaymentModal';
 import { validateBioInput } from '@/lib/utils';
-import { Copy, RefreshCw, Sparkles } from 'lucide-react';
+import { Copy, RefreshCw, Sparkles, CreditCard } from 'lucide-react';
 
 export function BioGenerator() {
   const [formData, setFormData] = useState({
@@ -21,9 +22,18 @@ export function BioGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  
+  const { address, isConnected } = useAccount();
 
   const handleGenerate = async () => {
     setError(null);
+    
+    // Check if wallet is connected
+    if (!isConnected || !address) {
+      setError('Please connect your wallet to generate bios');
+      return;
+    }
     
     const interests = formData.interests.split(',').map(i => i.trim()).filter(i => i);
     const personalityTraits = formData.personalityTraits.split(',').map(t => t.trim()).filter(t => t);
@@ -39,17 +49,39 @@ export function BioGenerator() {
       return;
     }
 
+    // Show payment modal for paid generation
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async () => {
     setIsGenerating(true);
+    setError(null);
     
     try {
-      const bios = await generateDatingBio({
-        interests,
-        personalityTraits,
-        lookingFor: formData.lookingFor,
-        age: formData.age ? parseInt(formData.age) : undefined,
-      });
+      const interests = formData.interests.split(',').map(i => i.trim()).filter(i => i);
+      const personalityTraits = formData.personalityTraits.split(',').map(t => t.trim()).filter(t => t);
       
-      setGeneratedBios(bios);
+      const response = await fetch('/api/bio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          interests,
+          personalityTraits,
+          lookingFor: formData.lookingFor,
+          age: formData.age,
+          walletAddress: address,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setGeneratedBios(result.data);
+      } else {
+        setError(result.error || 'Failed to generate bios');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate bios');
     } finally {
@@ -116,10 +148,17 @@ export function BioGenerator() {
             onClick={handleGenerate}
             isLoading={isGenerating}
             className="w-full"
-            disabled={isGenerating}
+            disabled={isGenerating || !isConnected}
           >
-            {isGenerating ? 'Generating Your Perfect Bios...' : 'Generate Dating Bios'}
+            <CreditCard className="w-4 h-4 mr-2" />
+            {isGenerating ? 'Generating Your Perfect Bios...' : 'Generate Dating Bios (0.001 ETH)'}
           </Button>
+          
+          {!isConnected && (
+            <p className="text-sm text-gray-500 text-center">
+              Connect your wallet to generate bios
+            </p>
+          )}
         </div>
       </Card>
 
@@ -151,12 +190,21 @@ export function BioGenerator() {
             onClick={handleGenerate}
             isLoading={isGenerating}
             className="w-full flex items-center space-x-2"
+            disabled={!isConnected}
           >
             <RefreshCw className="w-4 h-4" />
-            <span>Generate New Variations</span>
+            <span>Generate New Variations (0.001 ETH)</span>
           </Button>
         </div>
       )}
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        serviceType="bio"
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }
