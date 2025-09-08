@@ -10,7 +10,7 @@
     "subtitle": "Built with Zara",
     "description": "SoulConnect is a Base Mini App built with Zara.",
     "iconUrl": "https://0co.to/images/zara-2.png",
-    "homeUrl": "https://f59db8cd75684a73a4b7ced20eee352a-gkvi.vercel.app",
+    "homeUrl": "https://f59db8cd75684a73a4b7ced20eee352a-gxgt.vercel.app",
     "splashImageUrl": "https://f59db8cd75684a73a4b7ced20eee352a-gkvi.vercel.app/splash.png",
     "splashBackgroundColor": "#000000",
     "heroImageUrl": "https://f59db8cd75684a73a4b7ced20eee352a-gkvi.vercel.app/image.png",
@@ -25,6 +25,6 @@
       "miniapp",
       "onchainkit"
     ],
-    "webhookUrl": "https://f59db8cd75684a73a4b7ced20eee352a-gkvi.vercel.app/api/webhook"
+    "webhookUrl": "https://f59db8cd75684a73a4b7ced20eee352a-gxgt.vercel.app/api/webhook"
   }
 }
