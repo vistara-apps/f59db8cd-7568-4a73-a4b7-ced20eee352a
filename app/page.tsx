@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { AppShell } from '@/components/AppShell';
 import { BioGenerator } from '@/components/BioGenerator';
 import { DateIdeaGenerator } from '@/components/DateIdeaGenerator';
+import { GenerationHistory } from '@/components/GenerationHistory';
 import { WalletConnection } from '@/components/WalletConnection';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
-import { Sparkles, Heart, Users, Zap } from 'lucide-react';
+import { Sparkles, Heart, Users, Zap, History } from 'lucide-react';
 
-type ActiveTab = 'bio' | 'dates';
+type ActiveTab = 'bio' | 'dates' | 'history';
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('bio');
@@ -66,22 +67,33 @@ export default function HomePage() {
         <WalletConnection />
 
         {/* Tab Navigation */}
-        <div className="flex space-x-2 bg-surface rounded-lg p-1 border border-gray-100">
+        <div className="flex space-x-1 bg-surface rounded-lg p-1 border border-gray-100">
           <Button
             variant={activeTab === 'bio' ? 'primary' : 'secondary'}
             onClick={() => setActiveTab('bio')}
             className="flex-1"
           >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Bio Generator
+            <Sparkles className="w-4 h-4 mr-1" />
+            <span className="hidden sm:inline">Bio Generator</span>
+            <span className="sm:hidden">Bios</span>
           </Button>
           <Button
             variant={activeTab === 'dates' ? 'primary' : 'secondary'}
             onClick={() => setActiveTab('dates')}
             className="flex-1"
           >
-            <Heart className="w-4 h-4 mr-2" />
-            Date Ideas
+            <Heart className="w-4 h-4 mr-1" />
+            <span className="hidden sm:inline">Date Ideas</span>
+            <span className="sm:hidden">Dates</span>
+          </Button>
+          <Button
+            variant={activeTab === 'history' ? 'primary' : 'secondary'}
+            onClick={() => setActiveTab('history')}
+            className="flex-1"
+          >
+            <History className="w-4 h-4 mr-1" />
+            <span className="hidden sm:inline">History</span>
+            <span className="sm:hidden">History</span>
           </Button>
         </div>
 
@@ -89,6 +101,7 @@ export default function HomePage() {
         <div className="animate-fade-in">
           {activeTab === 'bio' && <BioGenerator />}
           {activeTab === 'dates' && <DateIdeaGenerator />}
+          {activeTab === 'history' && <GenerationHistory />}
         </div>
 
         {/* Features Overview */}

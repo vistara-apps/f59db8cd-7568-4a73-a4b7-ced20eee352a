@@ -1,10 +1,12 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-  dangerouslyAllowBrowser: true,
-});
+function getOpenAIClient() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY,
+    baseURL: process.env.OPENROUTER_API_KEY ? "https://openrouter.ai/api/v1" : undefined,
+    dangerouslyAllowBrowser: true,
+  });
+}
 
 export async function generateDatingBio(input: {
   interests: string[];
@@ -30,6 +32,7 @@ Guidelines:
 Return only the 3 bios, separated by "---"`;
 
   try {
+    const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
       model: 'google/gemini-2.0-flash-001',
       messages: [{ role: 'user', content: prompt }],
@@ -76,6 +79,7 @@ Format as JSON array with objects containing: title, description, category, esti
 Make the ideas creative, location-appropriate, and tailored to the interests and vibe.`;
 
   try {
+    const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
       model: 'google/gemini-2.0-flash-001',
       messages: [{ role: 'user', content: prompt }],
