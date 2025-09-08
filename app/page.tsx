@@ -8,6 +8,8 @@ import { WalletConnection } from '@/components/WalletConnection';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { useMiniKit } from '@coinbase/onchainkit/minikit';
+import { useAccount } from 'wagmi';
+import { analytics, trackEvents, performanceMonitor } from '@/lib/analytics';
 import { Sparkles, Heart, Users, Zap } from 'lucide-react';
 
 type ActiveTab = 'bio' | 'dates';
@@ -15,10 +17,32 @@ type ActiveTab = 'bio' | 'dates';
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('bio');
   const { setFrameReady } = useMiniKit();
+  const { address, isConnected } = useAccount();
 
   useEffect(() => {
     setFrameReady();
+    
+    // Track page view
+    analytics.page('home');
+    
+    // Initialize performance monitoring
+    performanceMonitor.trackWebVitals();
   }, [setFrameReady]);
+
+  // Track wallet connection changes
+  useEffect(() => {
+    if (isConnected && address) {
+      analytics.identify(address);
+      trackEvents.walletConnected(address);
+    } else if (!isConnected) {
+      trackEvents.walletDisconnected();
+    }
+  }, [isConnected, address]);
+
+  const handleTabSwitch = (newTab: ActiveTab) => {
+    trackEvents.tabSwitched(activeTab, newTab);
+    setActiveTab(newTab);
+  };
 
   return (
     <AppShell>
@@ -69,7 +93,7 @@ export default function HomePage() {
         <div className="flex space-x-2 bg-surface rounded-lg p-1 border border-gray-100">
           <Button
             variant={activeTab === 'bio' ? 'primary' : 'secondary'}
-            onClick={() => setActiveTab('bio')}
+            onClick={() => handleTabSwitch('bio')}
             className="flex-1"
           >
             <Sparkles className="w-4 h-4 mr-2" />
@@ -77,7 +101,7 @@ export default function HomePage() {
           </Button>
           <Button
             variant={activeTab === 'dates' ? 'primary' : 'secondary'}
-            onClick={() => setActiveTab('dates')}
+            onClick={() => handleTabSwitch('dates')}
             className="flex-1"
           >
             <Heart className="w-4 h-4 mr-2" />
