@@ -5,7 +5,7 @@ import { Card } from './Card';
 import { Button } from './Button';
 import { TextInput, Textarea } from './TextInput';
 import { LoadingSpinner } from './LoadingSpinner';
-import { generateDatingBio } from '@/lib/ai';
+// Removed direct AI import - now using API routes
 import { validateBioInput } from '@/lib/utils';
 import { Copy, RefreshCw, Sparkles } from 'lucide-react';
 
@@ -42,14 +42,26 @@ export function BioGenerator() {
     setIsGenerating(true);
     
     try {
-      const bios = await generateDatingBio({
-        interests,
-        personalityTraits,
-        lookingFor: formData.lookingFor,
-        age: formData.age ? parseInt(formData.age) : undefined,
+      const response = await fetch('/api/generate-bio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          interests,
+          personalityTraits,
+          lookingFor: formData.lookingFor,
+          age: formData.age ? parseInt(formData.age) : undefined,
+        }),
       });
+
+      const data = await response.json();
       
-      setGeneratedBios(bios);
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate bios');
+      }
+      
+      setGeneratedBios(data.bios);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate bios');
     } finally {

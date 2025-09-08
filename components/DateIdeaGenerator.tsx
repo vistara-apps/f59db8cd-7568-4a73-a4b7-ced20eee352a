@@ -5,7 +5,7 @@ import { Card } from './Card';
 import { Button } from './Button';
 import { TextInput, Textarea } from './TextInput';
 import { LoadingSpinner } from './LoadingSpinner';
-import { generateDateIdeas } from '@/lib/ai';
+// Removed direct AI import - now using API routes
 import { validateDateIdeaInput } from '@/lib/utils';
 import { MapPin, Clock, DollarSign, Heart, RefreshCw } from 'lucide-react';
 
@@ -48,14 +48,26 @@ export function DateIdeaGenerator() {
     setIsGenerating(true);
     
     try {
-      const ideas = await generateDateIdeas({
-        interests,
-        location: formData.location,
-        vibe: formData.vibe,
-        budget: formData.budget || undefined,
+      const response = await fetch('/api/generate-date-ideas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          interests,
+          location: formData.location,
+          vibe: formData.vibe,
+          budget: formData.budget || undefined,
+        }),
       });
+
+      const data = await response.json();
       
-      setGeneratedIdeas(ideas);
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate date ideas');
+      }
+      
+      setGeneratedIdeas(data.ideas);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate date ideas');
     } finally {

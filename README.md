@@ -4,10 +4,19 @@ A Base Mini App that uses AI to generate compelling dating app bios and personal
 
 ## Features
 
+### Core Features ✨
 - **AI Bio Generator**: Create multiple unique, engaging dating app bios based on your personality and interests
 - **Personalized Date Ideas**: Get custom date suggestions tailored to your interests and location
-- **Base Integration**: Built on Base blockchain with wallet connectivity
+- **Generation History**: View and manage your past bio and date idea generations
+- **Copy & Share**: Easy copy-to-clipboard functionality for all generated content
+
+### Technical Features 🔧
+- **Base Integration**: Built on Base blockchain with secure wallet connectivity
+- **Micro-Payments**: Pay-per-generation model using ETH on Base network
 - **Mobile-First Design**: Optimized for mobile devices and Farcaster frames
+- **Real-time Feedback**: Toast notifications and loading states
+- **Data Persistence**: Local storage for user preferences and generation history
+- **Error Handling**: Comprehensive error handling and user feedback
 
 ## Tech Stack
 
@@ -63,10 +72,23 @@ A Base Mini App that uses AI to generate compelling dating app bios and personal
 
 ## Key Components
 
-- **BioGenerator**: AI-powered dating bio creation
-- **DateIdeaGenerator**: Personalized date idea suggestions
-- **WalletConnection**: Base wallet integration
-- **AppShell**: Main app layout and navigation
+### Core Components
+- **BioGenerator**: AI-powered dating bio creation with form validation
+- **DateIdeaGenerator**: Personalized date idea suggestions with location-based filtering
+- **GenerationHistory**: View and manage past generations with copy functionality
+- **PaymentModal**: Secure Base blockchain payment processing
+
+### Infrastructure Components
+- **WalletConnection**: Base wallet integration with OnchainKit
+- **AppShell**: Main app layout and responsive navigation
+- **ToastProvider**: Global notification system for user feedback
+- **API Routes**: Secure server-side AI generation endpoints
+
+### Utility Components
+- **Button**: Consistent button component with variants and loading states
+- **Card**: Flexible card component with elevation variants
+- **TextInput/Textarea**: Form input components with validation
+- **LoadingSpinner**: Animated loading indicator
 
 ## Deployment
 
